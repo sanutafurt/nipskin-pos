@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#C4B5F4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Nipskin POS">
+<title>Nipskin POS</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+const mf={name:"Nipskin POS",short_name:"NipPOS",start_url:"./",display:"standalone",background_color:"#ffffff",theme_color:"#C4B5F4",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23C4B5F4'/><text x='96' y='125' font-size='72' text-anchor='middle' fill='%231a1a1a' font-family='Arial'>nip</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
+const mb=new Blob([JSON.stringify(mf)],{type:'application/json'});
+document.write('<link rel="manifest" href="'+URL.createObjectURL(mb)+'">');
+</script>
+
+<style>
+:root {
+  --lila:      #C4B5F4;
+  --lila-dark: #8B72E0;
+  --lila-soft: #F2EFFE;
+  --lila-mid:  #DDD5F8;
+  --ink:       #1a1a1a;
+  --ink-2:     #444;
+  --ink-3:     #999;
+  --bg:        #fff;
+  --bg-2:      #F7F5FC;
+  --border:    rgba(196,181,244,0.35);
+  --border-2:  rgba(196,181,244,0.18);
+  --green:     #267a4a; --green-bg: #e4f5ed;
+  --amber:     #7a5000; --amber-bg: #fef3d8;
+  --red:       #b83030; --red-bg:   #fdecea;
+  --r:         16px; --rsm: 10px;
+  --shadow:    0 2px 10px rgba(196,181,244,0.25),0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 28px rgba(196,181,244,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;font-size:15px;color:var(--ink);background:var(--bg-2);min-height:100vh;max-width:430px;margin:0 auto}
+
+/* HEADER */
+.hdr{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.logo{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-0.5px}
+.logo em{color:var(--lila-dark);font-style:normal}
+.logo-tag{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--ink-3);text-transform:uppercase;margin-left:5px;vertical-align:middle}
+.s-pill{background:var(--lila-soft);color:var(--lila-dark);font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;border:1.5px solid var(--lila-mid)}
+
+/* SCREENS */
+.scr{display:none;padding:14px 16px 90px;flex-direction:column;gap:12px}
+.scr.active{display:flex}
+
+/* NAV */
+.nav{background:var(--bg);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
+.nb{border:none;background:transparent;padding:10px 4px 8px;font-size:10px;font-family:'Nunito',sans-serif;color:var(--ink-3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:800;transition:color .15s}
+.nb.active{color:var(--lila-dark)}
+.ni{font-size:20px;line-height:1}
+.nd{height:3px;width:18px;border-radius:2px;background:var(--lila);display:none;margin-top:1px}
+.nb.active .nd{display:block}
+
+/* CARD */
+.card{background:var(--bg);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);border:1px solid var(--border-2)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--lila) 0%,#b0a0f0 100%);border-radius:var(--r);padding:20px 18px;box-shadow:var(--shadow-lg)}
+.hero-t{font-size:21px;font-weight:800;color:var(--ink);line-height:1.15;margin-bottom:3px}
+.hero-s{font-size:13px;color:var(--ink-2);font-weight:600}
+
+/* SECTION TITLE */
+.stitle{font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:1.2px}
+
+/* CAT HEADER */
+.cat{font-size:10px;font-weight:800;color:var(--lila-dark);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0 4px;border-bottom:2px solid var(--lila-mid);margin-bottom:2px}
+.cat:first-child{padding-top:2px}
+
+/* PRODUCT ROW */
+.prow{display:flex;flex-direction:column;padding:10px 0;border-bottom:1px solid var(--border-2);gap:5px}
+.prow:last-child{border-bottom:none}
+.pname{font-size:13px;font-weight:700;line-height:1.4;white-space:normal;word-break:normal}
+.pmeta{font-size:11px;color:var(--ink-3);margin-top:1px;font-weight:600}
+.pprice{font-size:13px;color:var(--lila-dark);font-weight:800}
+.prow-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+
+/* QTY */
+.qctrl{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qbtn{width:28px;height:28px;border:2px solid var(--lila-mid);border-radius:8px;background:var(--lila-soft);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);font-weight:800;font-family:'Nunito',sans-serif;transition:all .1s;flex-shrink:0}
+.qbtn:active{background:var(--lila-mid);transform:scale(.9)}
+.qbtn:disabled{opacity:.3;cursor:default}
+.qnum{font-size:15px;font-weight:800;min-width:22px;text-align:center}
+
+/* BUTTONS */
+.btn{border:2px solid var(--border);background:transparent;border-radius:var(--rsm);padding:11px 16px;font-size:14px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:var(--ink);transition:all .15s;width:100%;text-align:center}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--ink);border-color:var(--ink);color:#fff;font-size:15px;font-weight:800;padding:14px;border-radius:var(--r);letter-spacing:.3px;box-shadow:0 4px 14px rgba(26,26,26,.2)}
+.btn-p:active{background:#333}
+.btn-o{border-color:var(--lila);color:var(--lila-dark);background:var(--lila-soft)}
+
+/* INPUTS */
+input[type=text],input[type=number]{border:2px solid var(--border);border-radius:var(--rsm);padding:10px 12px;font-size:14px;font-family:'Nunito',sans-serif;font-weight:600;width:100%;background:var(--bg);color:var(--ink);outline:none;transition:border-color .15s}
+input:focus{border-color:var(--lila)}
+
+/* LABEL */
+.lbl{font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+
+/* CHIPS */
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;border:2px solid var(--border);cursor:pointer;color:var(--ink-2);transition:all .15s;background:var(--bg);font-family:'Nunito',sans-serif}
+.chip.sel{background:var(--lila-soft);border-color:var(--lila);color:var(--lila-dark)}
+
+/* BADGES */
+.badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
+.b-ok{background:var(--green-bg);color:var(--green)}
+.b-low{background:var(--amber-bg);color:var(--amber)}
+.b-out{background:var(--red-bg);color:var(--red)}
+
+/* TOTAL BAR */
+.tbar{background:var(--lila-soft);border:2px solid var(--lila-mid);border-radius:var(--r);padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+.tlbl{font-size:13px;color:var(--lila-dark);font-weight:700}
+.tval{font-size:26px;font-weight:800;color:var(--ink)}
+
+/* METRICS */
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{background:var(--bg);border-radius:var(--r);padding:14px 12px;box-shadow:var(--shadow);border:1px solid var(--border-2)}
+.mval{font-size:20px;font-weight:800;line-height:1.2}
+.mlbl{font-size:11px;color:var(--ink-3);margin-top:2px;font-weight:600}
+
+/* SEARCH */
+.swrap{position:relative}
+.swrap input{padding-left:38px}
+.sicon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+
+/* SALE ITEM */
+.sitem{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border-2);gap:8px}
+.sitem:last-child{border-bottom:none}
+
+/* INV INPUT */
+.iinput{width:64px;text-align:center;padding:6px 4px}
+
+/* TOAST */
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.2);font-family:'Nunito',sans-serif}
+.toast.on{opacity:1}
+
+/* INSTALL BANNER */
+.ibanner{background:var(--lila);color:var(--ink);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;gap:10px}
+.ibanner button{background:var(--ink);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Nunito',sans-serif}
+.ibanner .ix{background:none;color:var(--ink);opacity:.6;padding:4px 6px;font-size:16px}
+
+/* CSV */
+.csvbox{background:var(--green-bg);border-radius:var(--rsm);padding:10px 12px;font-size:11px;font-family:monospace;color:var(--green);white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto}
+
+/* EMPTY */
+.empty{text-align:center;padding:24px 0;color:var(--ink-3);font-size:13px;font-weight:600}
+.eicon{font-size:32px;margin-bottom:8px}
+
+.scroll{overflow-y:auto}
+</style>
+</head>
+<body>
+
+<div class="ibanner" id="ib" style="display:none">
+  <span>📲 Instala Nipskin POS en tu celular</span>
+  <button onclick="installApp()">Instalar</button>
+  <button class="ix" onclick="this.parentElement.style.display='none'">✕</button>
+</div>
+
+<div class="hdr">
+  <div>
+    <span class="logo">nip<em>ski</em>n</span><span class="logo-tag">POS</span>
+  </div>
+  <div class="s-pill" id="sdisplay" onclick="openSellerPicker()" style="cursor:pointer">Vendedor ▾</div>
+</div>
+
+<!-- EVENTO -->
+<div class="scr active" id="scr-setup">
+  <div class="hero">
+    <div class="hero-t">Hola, ¿qué evento es hoy? 👋</div>
+    <div class="hero-s">Configura antes de empezar a vender</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Nombre del evento</div>
+    <input type="text" id="ename" placeholder="Ej: Feria SportLife Medellín">
+  </div>
+
+  <div class="card">
+    <div class="lbl">Vendedores del evento</div>
+    <div style="font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:10px">Agrega a todos los que van a vender hoy</div>
+    <div id="sellers-list"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input type="text" id="seller-input" placeholder="Nombre del vendedor…" style="flex:1" onkeydown="if(event.key==='Enter')addSeller()">
+      <button class="btn" style="width:auto;padding:10px 16px;background:var(--lila-soft);border-color:var(--lila);color:var(--lila-dark);font-weight:800;white-space:nowrap" onclick="addSeller()">+ Agregar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Inventario inicial — ajusta si es necesario</div>
+    <div id="inv-setup" class="scroll" style="max-height:300px"></div>
+  </div>
+
+  <div class="card" id="custom-prods-card">
+    <div class="lbl">Productos adicionales</div>
+    <div style="font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:10px">Agrega referencias que no estén en el catálogo</div>
+    <div id="custom-prods-list"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px" id="custom-form">
+      <input type="text" id="cp-name" placeholder="Nombre del producto">
+      <div style="display:flex;gap:8px">
+        <input type="text" id="cp-sku" placeholder="SKU (ej: NP999)" style="width:50%">
+        <input type="number" id="cp-price" placeholder="Precio COP" style="width:50%">
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="number" id="cp-stock" placeholder="Unidades" style="width:50%">
+        <button class="btn" style="width:50%;padding:10px;background:var(--lila-soft);border-color:var(--lila);color:var(--lila-dark);font-weight:800" onclick="addCustomProd()">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-p" onclick="startEvent()">Iniciar evento →</button>
+</div>
+
+<!-- VENDER -->
+<div class="scr" id="scr-sell">
+  <div style="display:flex;gap:8px">
+    <div class="swrap" style="flex:1">
+      <span class="sicon">🔍</span>
+      <input type="text" id="search" placeholder="Buscar por nombre, SKU o color…" oninput="filterP(this.value)">
+    </div>
+    <button onclick="openScanner()" style="background:var(--lila);border:none;border-radius:var(--rsm);padding:0 14px;font-size:22px;cursor:pointer;flex-shrink:0" title="Escanear código de barras">📷</button>
+  </div>
+  <div class="card" style="padding:10px 14px">
+    <div id="plist" class="scroll" style="max-height:340px"></div>
+  </div>
+  <div class="card">
+    <div class="lbl">Forma de pago</div>
+    <div class="chips" id="pchips">
+      <div class="chip sel" onclick="setPago(this,'Efectivo')">💵 Efectivo</div>
+      <div class="chip" onclick="setPago(this,'Tarjeta')">💳 Tarjeta</div>
+      <div class="chip" onclick="setPago(this,'Transferencia')">📲 Transferencia</div>
+    </div>
+  </div>
+  <div class="tbar">
+    <span class="tlbl">Total de la venta</span>
+    <span class="tval" id="total">$0</span>
+  </div>
+  <button class="btn btn-p" onclick="regVenta()">Registrar venta ✓</button>
+</div>
+
+<!-- STOCK -->
+<div class="scr" id="scr-inv">
+  <div class="stitle">Stock en tiempo real</div>
+  <div class="card" style="padding:10px 14px">
+    <div id="inv-live" class="scroll" style="max-height:480px"></div>
+  </div>
+</div>
+
+<!-- RESUMEN -->
+<div class="scr" id="scr-resumen">
+  <div class="stitle">Resumen del evento</div>
+  <div class="mgrid" id="mgrid"></div>
+  <div class="card">
+    <div class="lbl">Ventas registradas</div>
+    <div id="slist" class="scroll" style="max-height:240px"></div>
+  </div>
+  <button class="btn btn-o" onclick="exportCSV()">Exportar CSV para Shopify ↓</button>
+  <button class="btn btn-o" onclick="exportExcel()" style="border-color:#1d6f42;color:#1d6f42;background:#edf7f1;margin-top:-4px">Exportar Informe Excel ↓</button>
+  <div id="eprev" style="display:none;flex-direction:column;gap:8px">
+    <div class="stitle">Vista previa CSV</div>
+    <div class="csvbox" id="csvbox"></div>
+  </div>
+</div>
+
+<!-- HISTORIAL -->
+<div class="scr" id="scr-historial">
+  <div class="stitle">Historial de eventos</div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-p" onclick="nuevoEvento()" style="flex:1">+ Nuevo evento</button>
+  </div>
+  <div id="historial-list" style="display:flex;flex-direction:column;gap:10px"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nb active" id="nb-setup" onclick="goTo('setup')"><span class="ni">⚙️</span><span>Evento</span><div class="nd"></div></button>
+  <button class="nb" id="nb-sell"   onclick="goTo('sell')"><span class="ni">🛍️</span><span>Vender</span><div class="nd"></div></button>
+  <button class="nb" id="nb-inv"    onclick="goTo('inv')"><span class="ni">📦</span><span>Stock</span><div class="nd"></div></button>
+  <button class="nb" id="nb-resumen" onclick="goTo('resumen')"><span class="ni">📊</span><span>Resumen</span><div class="nd"></div></button>
+  <button class="nb" id="nb-historial" onclick="goTo('historial')"><span class="ni">🗂️</span><span>Historial</span><div class="nd"></div></button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- SCANNER MODAL -->
+<div id="scanner-modal" style="display:none;position:fixed;inset:0;z-index:400;background:#000;flex-direction:column">
+
+  <!-- Header -->
+  <div style="background:var(--bg);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div style="font-size:15px;font-weight:800">📷 Escanear producto</div>
+    <button onclick="closeScanner()" style="background:none;border:none;font-size:26px;cursor:pointer;color:var(--ink);line-height:1;padding:0 4px">✕</button>
+  </div>
+
+  <!-- Camera -->
+  <div style="position:relative;flex:1;overflow:hidden;background:#111;min-height:200px">
+    <video id="scanner-video" style="width:100%;height:100%;object-fit:cover;display:block" playsinline muted autoplay></video>
+
+    <!-- Viewfinder overlay -->
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;gap:16px">
+      <div style="position:relative;width:260px;height:150px">
+        <!-- Dimmed outside -->
+        <div style="position:absolute;inset:0;box-shadow:0 0 0 1000px rgba(0,0,0,0.55);border-radius:10px"></div>
+        <!-- Border -->
+        <div style="position:absolute;inset:0;border:2.5px solid var(--lila);border-radius:10px"></div>
+        <!-- Corners -->
+        <div style="position:absolute;top:-2px;left:-2px;width:22px;height:22px;border-top:4px solid #fff;border-left:4px solid #fff;border-radius:4px 0 0 0"></div>
+        <div style="position:absolute;top:-2px;right:-2px;width:22px;height:22px;border-top:4px solid #fff;border-right:4px solid #fff;border-radius:0 4px 0 0"></div>
+        <div style="position:absolute;bottom:-2px;left:-2px;width:22px;height:22px;border-bottom:4px solid #fff;border-left:4px solid #fff;border-radius:0 0 0 4px"></div>
+        <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;border-bottom:4px solid #fff;border-right:4px solid #fff;border-radius:0 0 4px 0"></div>
+      </div>
+      <div style="color:#fff;font-size:13px;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,0.9)">
+        Centra el código de barras en el recuadro
+      </div>
+    </div>
+  </div>
+
+  <!-- Hint text -->
+  <div id="scanner-hint" style="background:#222;color:#ccc;text-align:center;padding:10px 16px;font-size:12px;font-weight:600;flex-shrink:0"></div>
+
+  <!-- Manual input (fallback) -->
+  <div id="scanner-manual" style="display:none;background:var(--bg);padding:14px 18px;flex-shrink:0">
+    <div class="lbl" style="margin-bottom:8px">Ingresa el código EAN manualmente</div>
+    <div style="display:flex;gap:8px">
+      <input type="number" id="manual-ean" placeholder="Ej: 7708225158676" style="flex:1" inputmode="numeric">
+      <button class="btn btn-p" onclick="scanManual()" style="width:auto;padding:10px 18px">Buscar</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="scanner-result" style="display:none;background:var(--bg);padding:16px 18px;flex-shrink:0">
+    <div class="lbl" style="margin-bottom:8px">Producto detectado ✓</div>
+    <div id="scanner-product-info" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="scanAgain()" style="flex:1">🔄 Otro</button>
+      <button class="btn btn-p" id="scan-confirm-btn" onclick="confirmScan()" style="flex:2">Agregar al carrito ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELLER PICKER MODAL -->
+<div id="seller-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.4);align-items:flex-end;justify-content:center">
+  <div style="background:var(--bg);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:430px;padding:20px 20px 36px;box-shadow:var(--shadow-lg)">
+    <div style="font-size:13px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">Selecciona tu nombre</div>
+    <div id="seller-modal-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn" style="margin-top:16px;border-color:var(--border)" onclick="closeSellerPicker()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+const PRODS=[
+  {ean:'7708225158201',sku:'NP004',name:'Cinta Doble Faz',                  t:'NA',    c:'Clear',      p:34900,s:10,  cat:'Accesorios'},
+  {ean:'7708225158348',sku:'NP060',name:'Travel Nip Cover Case',             t:'NA',    c:'Lila',       p:44900,s:5,   cat:'Accesorios'},
+  {ean:'7708225158676',sku:'NP001',name:'Nip Cover Bare it All',             t:'M',     c:'Vainilla',   p:59900,s:10,  cat:'Mujer'},
+  {ean:'7708225158591',sku:'NP002',name:'Nip Cover Bare it All',             t:'M',     c:'Cappuccino', p:59900,s:10,  cat:'Mujer'},
+  {ean:'7708225158577',sku:'NP019',name:'Nip Cover Bare it All',             t:'Plus',  c:'Vainilla',   p:59900,s:10,  cat:'Mujer'},
+  {ean:'7709205188898',sku:'NP020',name:'Nip Cover Bare it All',             t:'Plus',  c:'Cappuccino', p:59900,s:10,  cat:'Mujer'},
+  {ean:'7708225158614',sku:'NP055',name:'Triángulo con Adhesivo',            t:'NA',    c:'Chantilly',  p:59900,s:0,   cat:'Mujer'},
+  {ean:'7708225158140',sku:'NP056',name:'Triángulo con Adhesivo',            t:'NA',    c:'Vainilla',   p:59900,s:4,   cat:'Mujer'},
+  {ean:'7708225158218',sku:'NP057',name:'Triángulo con Adhesivo',            t:'NA',    c:'Capuchino',  p:59900,s:4,   cat:'Mujer'},
+  {ean:'7708225158881',sku:'NP058',name:'Triángulo con Adhesivo',            t:'NA',    c:'Chocolate',  p:59900,s:4,   cat:'Mujer'},
+  {ean:'7708225158713',sku:'NP061',name:'Cubre Pezones Luna',                t:'NA',    c:'Chantilly',  p:59900,s:2,   cat:'Mujer'},
+  {ean:'7708225158096',sku:'NP062',name:'Cubre Pezones Luna',                t:'NA',    c:'Vainilla',   p:59900,s:2,   cat:'Mujer'},
+  {ean:'7708225158003',sku:'NP063',name:'Cubre Pezones Luna',                t:'NA',    c:'Capuchino',  p:59900,s:2,   cat:'Mujer'},
+  {ean:'7708225158690',sku:'NP064',name:'Cubre Pezones Luna',                t:'NA',    c:'Chocolate',  p:59900,s:2,   cat:'Mujer'},
+  {ean:'7709997776709',sku:'NP082',name:'Non Stick Cover Bring It On',       t:'M',     c:'Chantilly',  p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709331599049',sku:'NP083',name:'Non Stick Cover Bring It On',       t:'M',     c:'Vainilla',   p:59900,s:10,  cat:'Mujer'},
+  {ean:'7709331599018',sku:'NP084',name:'Non Stick Cover Bring It On',       t:'M',     c:'Cappuccino', p:59900,s:10,  cat:'Mujer'},
+  {ean:'7709331599087',sku:'NP086',name:'Non Stick Cover Bring It On',       t:'Plus',  c:'Chantilly',  p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709003506733',sku:'NP087',name:'Non Stick Cover Bring It On',       t:'Plus',  c:'Vainilla',   p:59900,s:10,  cat:'Mujer'},
+  {ean:'7709003506788',sku:'NP088',name:'Non Stick Cover Bring It On',       t:'Plus',  c:'Cappuccino', p:59900,s:10,  cat:'Mujer'},
+  {ean:'7709003506757',sku:'NP090',name:'Bra Smally',                        t:'Smally',c:'Latte',      p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709003506702',sku:'NP091',name:'Bra Smally',                        t:'Smally',c:'Caramel',    p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709003506771',sku:'NP092',name:'Bra Smally Black',                  t:'Smally',c:'Black',      p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709317750266',sku:'NP093',name:'Bra Middy',                         t:'Middy', c:'Latte',      p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709003506764',sku:'NP094',name:'Bra Middy',                         t:'Middy', c:'Caramel',    p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709317750280',sku:'NP095',name:'Bra Middy Black',                   t:'Middy', c:'Black',      p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709003506726',sku:'NP096',name:'Bra Fully',                         t:'Fully', c:'Latte',      p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709003506740',sku:'NP097',name:'Bra Fully',                         t:'Fully', c:'Caramel',    p:59900,s:0,   cat:'Mujer'},
+  {ean:'7709317750228',sku:'NP098',name:'Bra Fully Black',                   t:'Fully', c:'Black',      p:59900,s:0,   cat:'Mujer'},
+  {ean:'7707256203928',sku:'NP100',name:'Anti Chafe Reusable Niple Cover',   t:'NA',    c:'Clear',      p:34900,s:100, cat:'Hombre'},
+  {ean:'7706260489487',sku:'NP101',name:'Mens Disposable Nipple Cover x10',  t:'NA',    c:'Clear',      p:34900,s:300, cat:'Hombre'},
+  {ean:'7708225158041',sku:'SK000',name:'Pimple Patches x24',                t:'NA',    c:'NA',         p:24900,s:0,   cat:'Skin'},
+  {ean:'7708225158058',sku:'SK001',name:'Pimple Patches x9 Micro Capsule',   t:'NA',    c:'NA',         p:24900,s:0,   cat:'Skin'},
+  {ean:'7709331594004',sku:'SK004',name:'Pimple Patches Jewel',              t:'NA',    c:'NA',         p:24900,s:0,   cat:'Skin'},
+  {ean:'7709317750297',sku:'SK005',name:'Glow Getter Nipskin Decal x4',      t:'NA',    c:'NA',         p:24900,s:50,  cat:'Decal'},
+  {ean:'7709317750235',sku:'SK006',name:'Bloom Boss Nipskin Decal x4',       t:'NA',    c:'NA',         p:24900,s:50,  cat:'Decal'},
+  {ean:'7709317750259',sku:'SK007',name:'Dream Chaser Nipskin Decal x4',     t:'NA',    c:'NA',         p:24900,s:50,  cat:'Decal'},
+];
+const EAN_MAP={};
+PRODS.forEach(p=>{if(p.ean)EAN_MAP[p.ean]=p.sku;});
+
+// ── PERSISTENCE ──
+const DB_KEY = 'nipskin_eventos';
+const ACTIVE_KEY = 'nipskin_active';
+
+function saveState(){
+  try {
+    // Save active event state
+    localStorage.setItem(ACTIVE_KEY, JSON.stringify(ST));
+  } catch(e){ console.warn('Save error', e); }
+}
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(ACTIVE_KEY);
+    if(raw){
+      const saved = JSON.parse(raw);
+      Object.assign(ST, saved);
+      return true;
+    }
+  } catch(e){ console.warn('Load error', e); }
+  return false;
+}
+
+function getAllEvents(){
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+
+function saveEventToHistory(){
+  try {
+    const events = getAllEvents();
+    const existing = events.findIndex(e => e.eventId === ST.eventId);
+    const record = {
+      eventId: ST.eventId,
+      event: ST.event,
+      date: ST.date,
+      sellers: ST.sellers,
+      sales: ST.sales,
+      inv: ST.inv,
+      invInicial: ST.invInicial,
+      closed: false,
+    };
+    if(existing >= 0) events[existing] = record;
+    else events.push(record);
+    localStorage.setItem(DB_KEY, JSON.stringify(events));
+  } catch(e){ console.warn('History save error', e); }
+}
+
+function closeEvent(eventId){
+  try {
+    const events = getAllEvents();
+    const idx = events.findIndex(e => e.eventId === eventId);
+    if(idx >= 0){ events[idx].closed = true; localStorage.setItem(DB_KEY, JSON.stringify(events)); }
+  } catch(e){}
+}
+
+function deleteEvent(eventId){
+  if(!confirm('¿Eliminar este evento permanentemente?')) return;
+  try {
+    let events = getAllEvents();
+    events = events.filter(e => e.eventId !== eventId);
+    localStorage.setItem(DB_KEY, JSON.stringify(events));
+    // If deleting current active event, clear it
+    if(ST.eventId === eventId){
+      localStorage.removeItem(ACTIVE_KEY);
+      resetState();
+      goTo('setup');
+      toast('Evento eliminado');
+    }
+    buildHistorial();
+  } catch(e){}
+}
+
+function resetState(){
+  ST.eventId = null;
+  ST.event = 'Evento Nipskin';
+  ST.date = '';
+  ST.sellers = [];
+  ST.seller = '';
+  ST.sales = [];
+  ST.pago = 'Efectivo';
+  ST.cart = {};
+  ST.inv = {};
+  ST.invInicial = {};
+  PRODS.forEach(p=>{ ST.inv[p.sku]=p.s; ST.cart[p.sku]=0; });
+  G('ename').value = '';
+  G('seller-input').value = '';
+  G('sdisplay').textContent = 'Vendedor ▾';
+}
+
+// ── STATE ──
+const ST={
+  eventId: null,
+  event:'Evento Nipskin',
+  date: '',
+  sellers:[],
+  seller:'',
+  inv:{},
+  invInicial:{},
+  sales:[],
+  pago:'Efectivo',
+  cart:{}
+};
+PRODS.forEach(p=>{ ST.inv[p.sku]=p.s; ST.cart[p.sku]=0; });
+
+const fmt=n=>'$'+Math.round(n).toLocaleString('es-CO');
+const G=id=>document.getElementById(id);
+
+function toast(msg){const t=G('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2400);}
+
+
+function setPago(el,p){document.querySelectorAll('#pchips .chip').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');ST.pago=p;}
+
+// ── SELLERS ──
+function addSeller(){
+  const inp=G('seller-input');
+  const name=inp.value.trim();
+  if(!name){toast('Escribe un nombre');return;}
+  if(ST.sellers.includes(name)){toast(name+' ya está en la lista');return;}
+  ST.sellers.push(name);
+  if(!ST.seller) ST.seller=name;
+  inp.value='';
+  renderSellersList();
+}
+
+function removeSeller(name){
+  ST.sellers=ST.sellers.filter(s=>s!==name);
+  if(ST.seller===name) ST.seller=ST.sellers[0]||'';
+  G('sdisplay').textContent=ST.seller||'Vendedor ▾';
+  renderSellersList();
+}
+
+function renderSellersList(){
+  const el=G('sellers-list');
+  if(!ST.sellers.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--ink-3);font-weight:600;padding:4px 0">Ningún vendedor agregado aún</div>';
+    return;
+  }
+  el.innerHTML=ST.sellers.map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--lila-soft);border:1.5px solid var(--lila-mid);border-radius:var(--rsm);margin-bottom:6px">
+      <span style="font-size:14px;font-weight:700">${s}</span>
+      <button onclick="removeSeller('${s}')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 6px">✕</button>
+    </div>`).join('');
+}
+
+function openSellerPicker(){
+  if(!ST.sellers.length){toast('Agrega vendedores en la pantalla Evento');return;}
+  G('seller-modal-list').innerHTML=ST.sellers.map(s=>`
+    <button class="btn" onclick="pickSeller('${s}')"
+      style="text-align:left;font-size:15px;font-weight:700;padding:13px 16px;
+      ${ST.seller===s?'background:var(--lila-soft);border-color:var(--lila);color:var(--lila-dark)':''}">
+      ${s} ${ST.seller===s?'✓':''}
+    </button>`).join('');
+  G('seller-modal').style.display='flex';
+}
+
+function pickSeller(name){
+  ST.seller=name;
+  G('sdisplay').textContent=name+' ▾';
+  closeSellerPicker();
+  toast('Vendedor: '+name);
+}
+
+function closeSellerPicker(){
+  G('seller-modal').style.display='none';
+}
+
+function addCustomProd(){
+  const name=G('cp-name').value.trim();
+  const sku=(G('cp-sku').value.trim()||'CUSTOM-'+Date.now()).toUpperCase();
+  const price=parseInt(G('cp-price').value)||0;
+  const stock=parseInt(G('cp-stock').value)||0;
+  if(!name){toast('Escribe el nombre del producto');return;}
+  if(!price){toast('Escribe el precio');return;}
+  // Add to PRODS array
+  PRODS.push({sku,name,t:'NA',c:'NA',p:price,s:stock,cat:'Adicionales'});
+  ST.inv[sku]=stock; ST.cart[sku]=0;
+  // Clear form
+  G('cp-name').value=''; G('cp-sku').value=''; G('cp-price').value=''; G('cp-stock').value='';
+  renderCustomList();
+  buildSetup();
+  toast('✓ '+name+' agregado');
+}
+
+function renderCustomList(){
+  const customs=PRODS.filter(p=>p.cat==='Adicionales');
+  G('custom-prods-list').innerHTML=customs.length===0?'':customs.map(p=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-2);font-size:13px">
+      <div>
+        <span style="font-weight:700">${p.name}</span>
+        <span style="color:var(--ink-3);font-size:11px;margin-left:6px">${p.sku} · ${fmt(p.p)} · ${ST.inv[p.sku]} uds</span>
+      </div>
+      <button onclick="removeCustomProd('${p.sku}')" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 6px">✕</button>
+    </div>`).join('');
+}
+
+function removeCustomProd(sku){
+  const idx=PRODS.findIndex(p=>p.sku===sku);
+  if(idx>-1){PRODS.splice(idx,1);delete ST.inv[sku];delete ST.cart[sku];}
+  renderCustomList();
+  buildSetup();
+  toast('Producto eliminado');
+}
+
+function buildSetup(){
+  const cats=[...new Set(PRODS.map(p=>p.cat))];
+  G('inv-setup').innerHTML=cats.map(cat=>`
+    <div class="cat">${cat}</div>
+    ${PRODS.filter(p=>p.cat===cat).map(p=>`
+      <div class="prow">
+        <div class="pname">${p.name}</div>
+        <div class="prow-bottom">
+          <div class="pmeta">${p.sku}${p.t!='NA'?' · '+p.t:''}${p.c!='NA'?' · '+p.c:''}</div>
+          <input type="number" min="0" value="${ST.inv[p.sku]}" class="iinput"
+            onchange="ST.inv['${p.sku}']=parseInt(this.value)||0;saveState();">
+        </div>
+      </div>`).join('')}`).join('');
+}
+
+function startEvent(){
+  const n=G('ename').value.trim();if(n)ST.event=n;
+  const pending=G('seller-input').value.trim();
+  if(pending&&!ST.sellers.includes(pending)){ST.sellers.push(pending);G('seller-input').value='';}
+  if(!ST.sellers.length){toast('Agrega al menos un vendedor');return;}
+  if(!ST.seller) ST.seller=ST.sellers[0];
+  // Generate unique event ID if new event
+  if(!ST.eventId){
+    ST.eventId = 'EVT-'+Date.now();
+    ST.date = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'});
+    // Save initial inventory snapshot
+    ST.invInicial = {...ST.inv};
+  }
+  G('sdisplay').textContent=ST.seller+' ▾';
+  saveState();
+  saveEventToHistory();
+  buildPList('');buildInvLive();
+  toast('¡Listo! '+ST.event);goTo('sell');
+}
+
+function buildPList(filter){
+  const cats=[...new Set(PRODS.map(p=>p.cat))];
+  const q=(filter||'').toLowerCase();
+  let h='';
+  cats.forEach(cat=>{
+    const ps=PRODS.filter(p=>p.cat===cat&&(!q||p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q)||p.c.toLowerCase().includes(q)));
+    if(!ps.length)return;
+    h+=`<div class="cat">${cat}</div>`;
+    ps.forEach(p=>{
+      const stk=ST.inv[p.sku],out=stk===0;
+      const sc=out?'var(--red)':stk<5?'var(--amber)':'var(--ink-3)';
+      h+=`<div class="prow" style="${out?'opacity:.4':''}">
+        <div class="pname">${p.name}</div>
+        <div class="pmeta">${p.t!='NA'?p.t+' · ':''}${p.c!='NA'?p.c+' · ':''}<span style="color:${sc}">Stock: <b id="stk-${p.sku}">${stk}</b></span></div>
+        <div class="prow-bottom">
+          <div class="pprice">${fmt(p.p)}</div>
+          <div class="qctrl">
+            <button class="qbtn" onclick="chCart('${p.sku}',-1)"${out?' disabled':''}>−</button>
+            <span class="qnum" id="cart-${p.sku}">0</span>
+            <button class="qbtn" onclick="chCart('${p.sku}',1)"${out?' disabled':''}>+</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  });
+  G('plist').innerHTML=h||'<div class="empty"><div class="eicon">🔍</div>Sin resultados</div>';
+}
+
+function filterP(q){buildPList(q);}
+
+function chCart(sku,d){
+  const cur=ST.cart[sku]||0,stk=ST.inv[sku]||0;
+  const nx=Math.max(0,Math.min(cur+d,stk));
+  ST.cart[sku]=nx;
+  const e=G('cart-'+sku);if(e)e.textContent=nx;
+  updTotal();
+}
+
+function updTotal(){
+  let t=0;PRODS.forEach(p=>{t+=(ST.cart[p.sku]||0)*p.p;});
+  G('total').textContent=fmt(t);
+}
+
+function regVenta(){
+  const items=PRODS.filter(p=>(ST.cart[p.sku]||0)>0);
+  if(!items.length){toast('Agrega al menos un producto');return;}
+  let total=0;const si=[];
+  items.forEach(p=>{
+    const q=ST.cart[p.sku];
+    ST.inv[p.sku]-=q;total+=q*p.p;
+    si.push({sku:p.sku,name:p.name,t:p.t,c:p.c,q,p:p.p,sub:q*p.p});
+    ST.cart[p.sku]=0;
+    const ce=G('cart-'+p.sku);if(ce)ce.textContent='0';
+    const se=G('stk-'+p.sku);if(se)se.textContent=ST.inv[p.sku];
+  });
+  ST.sales.push({id:ST.sales.length+1,time:new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}),seller:ST.seller,pago:ST.pago,items:si,total});
+  updTotal();buildInvLive();
+  saveState();
+  saveEventToHistory();
+  toast('✓ Venta #'+ST.sales.length+' · '+fmt(total));
+}
+
+function buildInvLive(){
+  const cats=[...new Set(PRODS.map(p=>p.cat))];
+  G('inv-live').innerHTML=cats.map(cat=>`
+    <div class="cat">${cat}</div>
+    ${PRODS.filter(p=>p.cat===cat).map(p=>{
+      const s=ST.inv[p.sku];
+      const cls=s===0?'b-out':s<5?'b-low':'b-ok';
+      const lbl=s===0?'Agotado':s<5?'Poco':'OK';
+      const sold=ST.sales.reduce((a,sale)=>{const si=sale.items.find(i=>i.sku===p.sku);return a+(si?si.q:0);},0);
+      return `<div class="prow">
+        <div class="pname">${p.name}</div>
+        <div class="prow-bottom">
+          <div class="pmeta">${p.sku}${p.t!='NA'?' · '+p.t:''}${p.c!='NA'?' · '+p.c:''} · Vendido: <b>${sold}</b></div>
+          <div style="text-align:right;flex-shrink:0">
+            <span style="font-size:22px;font-weight:800;line-height:1">${s}</span>
+            <span class="badge ${cls}" style="margin-left:6px;display:inline-block">${lbl}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}`).join('');
+}
+
+function buildResumen(){
+  const tv=ST.sales.reduce((a,s)=>a+s.total,0);
+  const tu=ST.sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.q,0),0);
+  const bp={};ST.sales.forEach(s=>{bp[s.pago]=(bp[s.pago]||0)+s.total;});
+  const pp=Object.entries(bp).sort((a,b)=>b[1]-a[1])[0];
+  G('mgrid').innerHTML=`
+    <div class="metric"><div class="mval">${fmt(tv)}</div><div class="mlbl">Total vendido</div></div>
+    <div class="metric"><div class="mval">${ST.sales.length}</div><div class="mlbl">Transacciones</div></div>
+    <div class="metric"><div class="mval">${tu}</div><div class="mlbl">Unidades</div></div>
+    <div class="metric"><div class="mval">${pp?pp[0]:'—'}</div><div class="mlbl">Pago principal</div></div>
+  `;
+  const sl=G('slist');
+  if(!ST.sales.length){sl.innerHTML='<div class="empty"><div class="eicon">📋</div>Sin ventas aún</div>';return;}
+  // Per-seller summary
+  const sellerNames=[...new Set(ST.sales.map(s=>s.seller))];
+  let sellerHTML='';
+  sellerNames.forEach(name=>{
+    const ss=ST.sales.filter(s=>s.seller===name);
+    const stotal=ss.reduce((a,s)=>a+s.total,0);
+    const sUnits=ss.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.q,0),0);
+    sellerHTML+=`<div style="background:var(--lila-soft);border:1.5px solid var(--lila-mid);border-radius:var(--rsm);padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;font-weight:800">${name}</span>
+        <span style="font-size:15px;font-weight:800;color:var(--lila-dark)">${fmt(stotal)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--ink-3);font-weight:600;margin-top:3px">${ss.length} transacciones · ${sUnits} unidades</div>
+    </div>`;
+  });
+  sellerHTML+=`<div style="font-size:11px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px">Detalle de ventas</div>`;
+  sellerHTML+=[...ST.sales].reverse().map(s=>`
+    <div class="sitem">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">#${s.id} · ${s.time} · ${s.seller}</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:2px;font-weight:600">${s.pago} · ${s.items.map(i=>i.q+'× '+i.sku).join(', ')}</div>
+      </div>
+      <div style="font-weight:800;color:var(--ink);white-space:nowrap;font-size:14px">${fmt(s.total)}</div>
+    </div>`).join('');
+  sl.innerHTML=sellerHTML;
+}
+
+function exportCSV(){
+  if(!ST.sales.length){toast('No hay ventas para exportar');return;}
+  const rows=[['Venta_ID','Hora','Vendedor','SKU','Producto','Talla','Color','Cantidad','Precio_Unitario','Subtotal','Metodo_Pago','Evento']];
+  ST.sales.forEach(s=>{s.items.forEach(i=>{rows.push([s.id,s.time,s.seller,i.sku,'"'+i.name+'"',i.t,i.c,i.q,i.p,i.sub,s.pago,'"'+ST.event+'"']);});});
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  G('csvbox').textContent=csv;
+  const ep=G('eprev');ep.style.display='flex';ep.style.flexDirection='column';ep.style.gap='8px';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='nipskin_'+ST.event.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();toast('✓ CSV descargado');
+}
+
+function goTo(s){
+  document.querySelectorAll('.scr').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(e=>e.classList.remove('active'));
+  G('scr-'+s).classList.add('active');
+  G('nb-'+s).classList.add('active');
+  if(s==='resumen')buildResumen();
+  if(s==='inv')buildInvLive();
+  if(s==='setup'){buildSetup();renderSellersList();}
+  if(s==='historial') buildHistorial();
+}
+
+// ── EXPORT EXCEL ──
+function exportExcel(){
+  if(!ST.sales.length){toast('No hay ventas para exportar');return;}
+  const wb = XLSX.utils.book_new();
+
+  // ── HOJA 1: RESUMEN DEL EVENTO ──
+  const totalVentas = ST.sales.reduce((a,s)=>a+s.total,0);
+  const totalUds    = ST.sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.q,0),0);
+  const byPago={};
+  ST.sales.forEach(s=>{byPago[s.pago]=(byPago[s.pago]||0)+s.total;});
+
+  const resumenData = [
+    ['INFORME DE EVENTO — NIPSKIN POS','','',''],
+    ['Evento:',  ST.event,  '', ''],
+    ['Fecha:',   new Date().toLocaleDateString('es-CO'), '', ''],
+    ['','','',''],
+    ['RESUMEN GENERAL','','',''],
+    ['Total vendido', 'Transacciones', 'Unidades', 'Vendedores'],
+    [totalVentas, ST.sales.length, totalUds, [...new Set(ST.sales.map(s=>s.seller))].length],
+    ['','','',''],
+    ['VENTAS POR FORMA DE PAGO','','',''],
+    ['Método','Total COP','',''],
+    ...Object.entries(byPago).map(([k,v])=>[k, v, '', '']),
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(resumenData);
+  ws1['!cols'] = [{wch:28},{wch:20},{wch:16},{wch:16}];
+  // Style header rows
+  ws1['A1'] = {v:'INFORME DE EVENTO — NIPSKIN POS', t:'s', s:{font:{bold:true,sz:14}}};
+  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen');
+
+  // ── HOJA 2: POR VENDEDOR ──
+  const sellerNames=[...new Set(ST.sales.map(s=>s.seller))];
+  const vendedorRows=[
+    ['Vendedor','Transacciones','Unidades vendidas','Total COP','Efectivo','Tarjeta','Transferencia']
+  ];
+  sellerNames.forEach(name=>{
+    const ss=ST.sales.filter(s=>s.seller===name);
+    const stotal=ss.reduce((a,s)=>a+s.total,0);
+    const sUnits=ss.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.q,0),0);
+    const efe=ss.filter(s=>s.pago==='Efectivo').reduce((a,s)=>a+s.total,0);
+    const tar=ss.filter(s=>s.pago==='Tarjeta').reduce((a,s)=>a+s.total,0);
+    const tra=ss.filter(s=>s.pago==='Transferencia').reduce((a,s)=>a+s.total,0);
+    vendedorRows.push([name, ss.length, sUnits, stotal, efe, tar, tra]);
+  });
+  // Totals row
+  vendedorRows.push([
+    'TOTAL',
+    ST.sales.length,
+    totalUds,
+    totalVentas,
+    ST.sales.filter(s=>s.pago==='Efectivo').reduce((a,s)=>a+s.total,0),
+    ST.sales.filter(s=>s.pago==='Tarjeta').reduce((a,s)=>a+s.total,0),
+    ST.sales.filter(s=>s.pago==='Transferencia').reduce((a,s)=>a+s.total,0),
+  ]);
+  const ws2 = XLSX.utils.aoa_to_sheet(vendedorRows);
+  ws2['!cols'] = [{wch:20},{wch:16},{wch:18},{wch:16},{wch:14},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Por Vendedor');
+
+  // ── HOJA 3: DETALLE DE VENTAS ──
+  const detalleRows=[
+    ['Venta#','Hora','Vendedor','SKU','Producto','Talla','Color','Cantidad','Precio Unit.','Subtotal','Método Pago']
+  ];
+  ST.sales.forEach(s=>{
+    s.items.forEach(i=>{
+      detalleRows.push([s.id, s.time, s.seller, i.sku, i.name, i.t==='NA'?'':i.t, i.c==='NA'?'':i.c, i.q, i.p, i.sub, s.pago]);
+    });
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(detalleRows);
+  ws3['!cols'] = [{wch:8},{wch:8},{wch:16},{wch:10},{wch:30},{wch:8},{wch:12},{wch:10},{wch:13},{wch:13},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Detalle Ventas');
+
+  // ── HOJA 4: INVENTARIO FINAL ──
+  const invRows=[
+    ['SKU','Producto','Talla','Color','Categoría','Inventario Inicial','Vendido','Stock Final','PVP','Ingreso Total']
+  ];
+  PRODS.forEach(p=>{
+    const vendido=ST.sales.reduce((a,s)=>{const si=s.items.find(i=>i.sku===p.sku);return a+(si?si.q:0);},0);
+    const inicial=p.s;
+    const final=ST.inv[p.sku];
+    invRows.push([p.sku, p.name, p.t==='NA'?'':p.t, p.c==='NA'?'':p.c, p.cat, inicial, vendido, final, p.p, vendido*p.p]);
+  });
+  // Summary row
+  const totalVendidoUds=invRows.slice(1).reduce((a,r)=>a+r[6],0);
+  const totalIngreso=invRows.slice(1).reduce((a,r)=>a+r[9],0);
+  invRows.push(['','','','','','TOTAL',totalVendidoUds,'','' ,totalIngreso]);
+  const ws4 = XLSX.utils.aoa_to_sheet(invRows);
+  ws4['!cols'] = [{wch:10},{wch:30},{wch:8},{wch:12},{wch:14},{wch:18},{wch:10},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws4, 'Inventario Final');
+
+  // Download
+  const fecha = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, 'nipskin_informe_'+ST.event.replace(/\s+/g,'_')+'_'+fecha+'.xlsx');
+  toast('✓ Informe Excel descargado');
+}
+
+// ── SCANNER ──
+let scannerActive = false;
+let scannedSku = null;
+let videoStream = null;
+let animFrame = null;
+
+async function openScanner(){
+  const modal = G('scanner-modal');
+  G('scanner-result').style.display = 'none';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  scannedSku = null;
+  scannerActive = true;
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    });
+    const video = G('scanner-video');
+    video.srcObject = videoStream;
+    video.setAttribute('playsinline', true);
+    await video.play();
+
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({
+        formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e', 'itf']
+      });
+      const scan = async () => {
+        if (!scannerActive) return;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length > 0) {
+            handleScan(codes[0].rawValue);
+            return;
+          }
+        } catch(e) {}
+        animFrame = requestAnimationFrame(scan);
+      };
+      animFrame = requestAnimationFrame(scan);
+    } else {
+      // BarcodeDetector not available — show manual input
+      G('scanner-hint').textContent = 'Tu navegador no soporta escaneo automático. Ingresa el código manualmente:';
+      G('scanner-manual').style.display = 'block';
+    }
+  } catch(e) {
+    console.error('Camera error:', e);
+    G('scanner-hint').textContent = 'No se pudo acceder a la cámara. Ingresa el código manualmente:';
+    G('scanner-manual').style.display = 'block';
+  }
+}
+
+function handleScan(raw){
+  if (!scannerActive) return;
+  scannerActive = false;
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (navigator.vibrate) navigator.vibrate(120);
+
+  const code = raw.trim();
+  const sku = EAN_MAP[code] || EAN_MAP[code.replace(/^0+/, '')];
+
+  if (!sku) {
+    toast('Código no reconocido: ' + code);
+    scannerActive = true;
+    animFrame = requestAnimationFrame(function scan(){
+      if(!scannerActive) return;
+      if('BarcodeDetector' in window){
+        new BarcodeDetector({formats:['ean_13','ean_8','code_128','upc_a','upc_e']})
+          .detect(G('scanner-video'))
+          .then(codes=>{ if(codes.length>0) handleScan(codes[0].rawValue); else animFrame=requestAnimationFrame(scan); })
+          .catch(()=>{ animFrame=requestAnimationFrame(scan); });
+      }
+    });
+    return;
+  }
+
+  const prod = PRODS.find(p => p.sku === sku);
+  if (!prod) { toast('Producto no encontrado'); return; }
+
+  scannedSku = sku;
+  const stock = ST.inv[sku];
+  const outOfStock = stock === 0;
+  const stockColor = outOfStock ? 'var(--red)' : stock < 5 ? 'var(--amber)' : 'var(--green)';
+
+  G('scanner-product-info').innerHTML = `
+    <div style="background:var(--lila-soft);border:2px solid var(--lila-mid);border-radius:var(--rsm);padding:14px">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">${prod.name}</div>
+      <div style="font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:10px">
+        ${prod.sku}${prod.t!='NA'?' · '+prod.t:''}${prod.c!='NA'?' · '+prod.c:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:22px;font-weight:800;color:var(--lila-dark)">${fmt(prod.p)}</span>
+        <span style="font-size:13px;font-weight:700;color:${stockColor}">
+          ${outOfStock ? '⚠️ Sin stock' : '✓ Stock: '+stock}
+        </span>
+      </div>
+    </div>`;
+
+  const btn = G('scan-confirm-btn');
+  btn.disabled = outOfStock;
+  btn.style.opacity = outOfStock ? '0.4' : '1';
+  G('scanner-result').style.display = 'block';
+}
+
+function confirmScan(){
+  if (!scannedSku) return;
+  const name = PRODS.find(p => p.sku === scannedSku).name;
+  chCart(scannedSku, 1);
+  closeScanner();
+  toast('✓ ' + name + ' agregado');
+  scannedSku = null;
+}
+
+function scanAgain(){
+  scannedSku = null;
+  scannerActive = true;
+  G('scanner-result').style.display = 'none';
+  G('manual-ean').value = '';
+  if ('BarcodeDetector' in window) {
+    const detector = new BarcodeDetector({formats:['ean_13','ean_8','code_128','upc_a','upc_e']});
+    const scan = async () => {
+      if (!scannerActive) return;
+      try {
+        const codes = await detector.detect(G('scanner-video'));
+        if (codes.length > 0) { handleScan(codes[0].rawValue); return; }
+      } catch(e) {}
+      animFrame = requestAnimationFrame(scan);
+    };
+    animFrame = requestAnimationFrame(scan);
+  }
+}
+
+function closeScanner(){
+  scannerActive = false;
+  scannedSku = null;
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  const video = G('scanner-video');
+  if (video) video.srcObject = null;
+  G('scanner-modal').style.display = 'none';
+  G('scanner-result').style.display = 'none';
+  G('scanner-manual').style.display = 'none';
+}
+
+function scanManual(){
+  const code = G('manual-ean').value.trim();
+  if (!code) { toast('Ingresa el código EAN'); return; }
+  handleScan(code);
+}
+
+// ── HISTORIAL ──
+function buildHistorial(){
+  const events = getAllEvents();
+  const el = G('historial-list');
+  if(!events.length){
+    el.innerHTML=`<div class="empty"><div class="eicon">🗂️</div>No hay eventos guardados</div>`;
+    return;
+  }
+  el.innerHTML=[...events].reverse().map(ev=>{
+    const tv = ev.sales.reduce((a,s)=>a+s.total,0);
+    const tu = ev.sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.q,0),0);
+    const sellerNames=[...new Set(ev.sales.map(s=>s.seller))];
+    const isActive = ST.eventId === ev.eventId;
+    return `<div class="card" style="border:2px solid ${isActive?'var(--lila)':'var(--border-2)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:15px;font-weight:800">${ev.event}</div>
+          <div style="font-size:11px;color:var(--ink-3);font-weight:600;margin-top:2px">${ev.date} ${isActive?'· <span style="color:var(--lila-dark)">EN CURSO</span>':''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:17px;font-weight:800;color:var(--lila-dark)">${fmt(tv)}</div>
+          <div style="font-size:11px;color:var(--ink-3);font-weight:600">${ev.sales.length} ventas · ${tu} uds</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--ink-3);font-weight:600;margin-bottom:10px">
+        Vendedores: ${ev.sellers.join(', ')||'—'}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${isActive?`<button class="btn" onclick="goTo('resumen')" style="flex:1;font-size:12px;padding:8px">Ver resumen</button>`:''}
+        <button class="btn" onclick="exportEventExcel('${ev.eventId}')" style="flex:1;font-size:12px;padding:8px;border-color:#1d6f42;color:#1d6f42;background:#edf7f1">Excel ↓</button>
+        <button class="btn" onclick="exportEventCSV('${ev.eventId}')" style="flex:1;font-size:12px;padding:8px;border-color:var(--lila);color:var(--lila-dark);background:var(--lila-soft)">CSV ↓</button>
+        <button class="btn" onclick="deleteEvent('${ev.eventId}')" style="flex:1;font-size:12px;padding:8px;border-color:var(--red);color:var(--red)">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function nuevoEvento(){
+  if(ST.sales.length>0){
+    if(!confirm('¿Crear un nuevo evento? El evento actual quedará guardado en el historial.')) return;
+  }
+  localStorage.removeItem(ACTIVE_KEY);
+  resetState();
+  buildSetup();
+  renderSellersList();
+  goTo('setup');
+  toast('Nuevo evento listo para configurar');
+}
+
+function loadEventToActive(eventId){
+  const events = getAllEvents();
+  const ev = events.find(e=>e.eventId===eventId);
+  if(!ev) return;
+  ST.eventId=ev.eventId; ST.event=ev.event; ST.date=ev.date;
+  ST.sellers=ev.sellers; ST.seller=ev.sellers[0]||'';
+  ST.sales=ev.sales; ST.inv=ev.inv; ST.invInicial=ev.invInicial||{};
+  ST.cart={}; PRODS.forEach(p=>{ST.cart[p.sku]=0;});
+  G('sdisplay').textContent=ST.seller?ST.seller+' ▾':'Vendedor ▾';
+  saveState();
+  buildPList(''); buildInvLive();
+  goTo('resumen');
+  toast('Evento cargado: '+ST.event);
+}
+
+function exportEventCSV(eventId){
+  const events = getAllEvents();
+  const ev = events.find(e=>e.eventId===eventId) || ST;
+  if(!ev.sales||!ev.sales.length){toast('Sin ventas para exportar');return;}
+  const rows=[['Venta_ID','Hora','Vendedor','SKU','Producto','Talla','Color','Cantidad','Precio_Unitario','Subtotal','Metodo_Pago','Evento']];
+  ev.sales.forEach(s=>{s.items.forEach(i=>{
+    rows.push([s.id,s.time,s.seller,i.sku,'"'+i.name+'"',i.t,i.c,i.q,i.p,i.sub,s.pago,'"'+ev.event+'"']);
+  });});
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='nipskin_'+ev.event.replace(/\s+/g,'_')+'_'+ev.date+'.csv';
+  a.click(); toast('✓ CSV descargado');
+}
+
+function exportEventExcel(eventId){
+  const events = getAllEvents();
+  const ev = events.find(e=>e.eventId===eventId);
+  if(!ev||!ev.sales||!ev.sales.length){toast('Sin ventas para exportar');return;}
+  // Temporarily load into ST for reuse of exportExcel logic
+  const backup={...ST};
+  Object.assign(ST, ev);
+  exportExcel();
+  Object.assign(ST, backup);
+}
+
+// ── NUEVO EVENTO BUTTON in setup ──
+function nuevoEventoBtn(){
+  nuevoEvento();
+}
+
+// PWA
+let dp=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;G('ib').style.display='flex';});
+function installApp(){if(dp){dp.prompt();dp.userChoice.then(()=>{dp=null;G('ib').style.display='none';});}}
+if((navigator.userAgent.includes('iPhone')||navigator.userAgent.includes('iPad'))&&!window.navigator.standalone)G('ib').style.display='flex';
+
+// Service Worker
+if('serviceWorker' in navigator){
+  const sw=`const C='nipskin-v3';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['/'])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+
+// Init: load saved state or start fresh
+if(loadState()){
+  // Restore UI from saved state
+  if(ST.eventId){
+    G('ename').value = ST.event;
+    G('sdisplay').textContent = ST.seller ? ST.seller+' ▾' : 'Vendedor ▾';
+    buildSetup();
+    renderSellersList();
+    buildPList('');
+    buildInvLive();
+    buildHistorial();
+    // If there was an active event, go to sell screen
+    goTo('sell');
+    toast('Evento restaurado: '+ST.event);
+  } else {
+    buildSetup();buildPList('');goTo('setup');
+  }
+} else {
+  buildSetup();buildPList('');goTo('setup');
+}
+</script>
+</body>
+</html>
